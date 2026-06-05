@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  
+  --color-primary: #006b3f;
+  --color-primary-container: #008751;
+  --color-secondary-container: #fcd400;
+  --color-on-secondary-container: #6e5c00;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container-lowest: #ffffff;
+  --color-background-naija: #fcf9f8;
+  --color-on-background-naija: #1c1b1b;
+  --color-on-surface-variant-naija: #3e4a41;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #fcf9f8;
+  color: #1c1b1b;
+}
+
+/* Custom background pattern for Hero section */
+.hero-pattern {
+  background-color: #fcf9f8;
+  background-image: radial-gradient(#008751 0.5px, transparent 0.5px), radial-gradient(#008751 0.5px, #fcf9f8 0.5px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  opacity: 0.04;
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at top right, rgba(0, 135, 81, 0.05), transparent), 
+              radial-gradient(circle at bottom left, rgba(252, 212, 0, 0.03), transparent);
+}
+

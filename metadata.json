@@ -1,0 +1,6 @@
+{
+  "name": "NaijaPrice",
+  "description": "A crowd-sourced platform tracking live market prices of food, fuel, goods, and services across markets in Nigeria.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "PriceReport": {
+      "title": "PriceReport",
+      "description": "A crowd-sourced platform tracking live market prices of food, fuel, goods, and services across markets in Nigeria.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the price report"
+        },
+        "productName": {
+          "type": "string",
+          "description": "Name of the commodity/product"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["food", "fuel", "construction", "other"],
+          "description": "Category of the commodity"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Standard unit reference of pricing (e.g. Crate, Mudu, 50kg bag, Per Litre)"
+        },
+        "price": {
+          "type": "number",
+          "description": "Current retail price in Naira"
+        },
+        "prevPrice": {
+          "type": "number",
+          "description": "Previous price for comparison inside the market"
+        },
+        "changePercent": {
+          "type": "number",
+          "description": "Percentage change in price"
+        },
+        "trend": {
+          "type": "string",
+          "enum": ["up", "down", "stable"],
+          "description": "Trend direction"
+        },
+        "marketName": {
+          "type": "string",
+          "description": "Name of the local market"
+        },
+        "state": {
+          "type": "string",
+          "description": "State where the market is located"
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Whether the price report was verified by an administrator"
+        },
+        "contributor": {
+          "type": "string",
+          "description": "Display name of the contributor"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who submitted the report"
+        },
+        "dateObserved": {
+          "type": "string",
+          "description": "Specific date when this price was observed (YYYY-MM-DD)"
+        },
+        "comments": {
+          "type": "string",
+          "description": "Optional comments or context"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon or emoji representing the product"
+        },
+        "upvotes": {
+          "type": "number",
+          "description": "Count of upvotes from community verification"
+        },
+        "downvotes": {
+          "type": "number",
+          "description": "Count of downvotes representing discrepancies"
+        },
+        "voters": {
+          "type": "object",
+          "description": "Map mapping user UIDs to vote strings ('up' | 'down') to prevent double voting"
+        }
+      },
+      "required": ["id", "productName", "category", "unit", "price", "trend", "marketName", "state", "verified", "contributor", "dateObserved", "icon", "upvotes", "downvotes"]
+    }
+  },
+  "firestore": {
+    "/reports/{reportId}": {
+      "schema": "PriceReport",
+      "description": "Collection of all crowd-sourced price reports across Nigeria."
+    }
+  }
+}

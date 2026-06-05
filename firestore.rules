@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(docData) {
+      return isSignedIn() && docData.ownerId == request.auth.uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "oyeniranoluwafemi36@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Report validations
+    function isValidReport(data) {
+      return data.keys().hasAll(['id', 'productName', 'category', 'unit', 'price', 'trend', 'marketName', 'state', 'verified', 'contributor', 'ownerId', 'dateObserved', 'icon', 'upvotes', 'downvotes'])
+        && data.id is string && data.id.size() <= 128
+        && data.productName is string && data.productName.size() > 0 && data.productName.size() <= 128
+        && data.category is string && data.category in ['food', 'fuel', 'construction', 'other']
+        && data.unit is string && data.unit.size() <= 64
+        && data.price is number && data.price > 0
+        && data.trend is string && data.trend in ['up', 'down', 'stable']
+        && data.marketName is string && data.marketName.size() > 0 && data.marketName.size() <= 128
+        && data.state is string && data.state.size() > 0 && data.state.size() <= 128
+        && data.verified is bool
+        && data.contributor is string && data.contributor.size() <= 128
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.dateObserved is string && data.dateObserved.size() <= 10
+        && data.icon is string && data.icon.size() <= 16
+        && data.upvotes is number && data.upvotes >= 0
+        && data.downvotes is number && data.downvotes >= 0
+        && (!data.keys().hasAny(['comments']) || (data.comments is string && data.comments.size() <= 500))
+        && (!data.keys().hasAny(['prevPrice']) || data.prevPrice is number)
+        && (!data.keys().hasAny(['changePercent']) || data.changePercent is number)
+        && (!data.keys().hasAny(['voters']) || data.voters is map);
+    }
+
+    // Match rules for reports collection
+    match /reports/{reportId} {
+      allow get: if true; // Any visitor can read a single report
+      allow list: if true; // Any visitor can search or list reports (no PII inside)
+
+      allow create: if isSignedIn() 
+                    && isValidId(reportId)
+                    && isValidReport(incoming())
+                    && incoming().ownerId == request.auth.uid
+                    && incoming().verified == false; // standard users cannot create verified report directly
+
+      allow update: if isSignedIn()
+                    && isValidId(reportId)
+                    && isValidReport(incoming())
+                    && (
+                      isAdmin() || // Admins have full access
+                      (
+                        // standard user can update their own unverified reports
+                        isOwner(existing()) && (
+                          existing().verified == false &&
+                          incoming().ownerId == existing().ownerId &&
+                          incoming().id == existing().id &&
+                          incoming().verified == existing().verified &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['productName', 'price', 'prevPrice', 'changePercent', 'trend', 'marketName', 'state', 'comments', 'unit', 'category', 'icon'])
+                        ) ||
+                        // Non-owner (community) vote update action
+                        // Allow updating upvotes, downvotes, and voters only
+                        (
+                          incoming().id == existing().id &&
+                          incoming().productName == existing().productName &&
+                          incoming().category == existing().category &&
+                          incoming().unit == existing().unit &&
+                          incoming().price == existing().price &&
+                          incoming().trend == existing().trend &&
+                          incoming().marketName == existing().marketName &&
+                          incoming().state == existing().state &&
+                          incoming().verified == existing().verified &&
+                          incoming().contributor == existing().contributor &&
+                          incoming().ownerId == existing().ownerId &&
+                          incoming().dateObserved == existing().dateObserved &&
+                          incoming().icon == existing().icon &&
+                          (!existing().keys().hasAny(['comments']) || incoming().comments == existing().comments) &&
+                          (!existing().keys().hasAny(['prevPrice']) || incoming().prevPrice == existing().prevPrice) &&
+                          (!existing().keys().hasAny(['changePercent']) || incoming().changePercent == existing().changePercent) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['upvotes', 'downvotes', 'voters'])
+                        )
+                      )
+                    );
+
+      allow delete: if isSignedIn()
+                    && isValidId(reportId)
+                    && (
+                      isAdmin() || 
+                      (isOwner(existing()) && existing().verified == false) // Owner can delete their own unverified reports
+                    );
+    }
+
+    // Admins collection rules
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+  }
+}
